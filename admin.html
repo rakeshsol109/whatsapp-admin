@@ -3,23 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>WhatsApp Dark Admin</title>
+  <title>WhatsApp Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* 1. DARK MODE SETTINGS (Photo Match) */
-    body {
-      background-color: #0b141a; /* Poora Background Black */
-      color: #e9edef; /* Text White */
-    }
+    /* 1. DARK MODE & SMOOTHNESS */
+    * { -webkit-tap-highlight-color: transparent; }
+    body { background-color: #0b141a; color: #e9edef; }
 
-    /* Scrollbar Dark */
+    /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #374045; border-radius: 4px; }
 
-    /* Chat Background Image (Dark) */
+    /* Chat Background */
     .wa-bg {
       background-color: #0b141a;
       background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d93671755d.png");
@@ -27,50 +24,39 @@
       opacity: 0.9;
     }
 
-    /* ---- MESSAGE BUBBLES CSS (Dark Mode) ---- */
-    
+    /* ---- MESSAGE BUBBLES ---- */
     #messages > div {
         padding: 6px 10px;
         margin-bottom: 2px;
         max-width: 80%;
         width: fit-content;
-        border-radius: 10px;
+        border-radius: 0px 10px 10px 10px;
         font-size: 15px;
         line-height: 1.3;
-        position: relative;
         box-shadow: 0 1px 0.5px rgba(0,0,0,0.3);
         word-wrap: break-word;
-        
-        /* RECEIVED MESSAGE (Left Side) - Dark Gray */
-        background-color: #202c33; 
+        background-color: #202c33; /* Received: Dark Gray */
         color: #e9edef;
         margin-right: auto; 
-        border-radius: 0px 10px 10px 10px;
     }
 
-    /* SENT MESSAGE (Right Side) - Dark Green (Photo Match) */
-    #messages > div.sent, 
-    #messages > div.me,
-    #messages > div.admin {
-        background-color: #005c4b; /* <-- YE HAI DARK GREEN COLOR */
+    /* Sent Message: Dark Green */
+    #messages > div.sent, #messages > div.me, #messages > div.admin {
+        background-color: #005c4b; 
         color: #e9edef;
         margin-left: auto; 
         margin-right: 0;
         border-radius: 10px 0px 10px 10px;
     }
     
-    /* Input Fields Dark Style */
-    .dark-input {
-      background-color: #2a3942;
-      color: white;
-      border: none;
-    }
-    .dark-input::placeholder { color: #8696a0; }
+    /* Utility Classes for Mobile View Switching */
+    .hidden-mobile { display: none !important; }
+    .flex-mobile { display: flex !important; }
   </style>
 </head>
 <body class="h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden bg-[#0b141a]">
 
-  <div id="sidebarContainer" class="w-full md:w-[350px] h-[35%] md:h-full border-r border-[#2f3b43] flex flex-col bg-[#111b21]">
+  <div id="sidebarContainer" class="w-full md:w-[350px] h-full border-r border-[#2f3b43] flex flex-col bg-[#111b21]">
     
     <div class="bg-[#202c33] p-3 border-b border-[#2f3b43] h-14 flex justify-between items-center shrink-0">
        <div class="flex items-center gap-2 font-bold text-[#aebac1]">
@@ -79,60 +65,167 @@
          </div>
          <span>Chats</span>
        </div>
-       <a href="/logout" class="text-[#aebac1] hover:text-white"><i class="fa-solid fa-power-off"></i></a>
+       <a href="/logout" class="text-[#aebac1]"><i class="fa-solid fa-power-off"></i></a>
     </div>
     
     <div id="chatList" class="flex-1 overflow-y-auto bg-[#111b21]">
-        <div class="text-center text-[#8696a0] text-xs mt-10">Loading chats...</div>
+        <div class="text-center text-[#8696a0] text-xs mt-10">Loading...</div>
     </div>
   </div>
 
 
-  <div class="flex-1 flex flex-col h-[65%] md:h-full relative bg-[#0b141a]">
+  <div id="chatContainer" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
     
     <div class="bg-[#202c33] p-2 px-4 border-b border-[#2f3b43] h-14 flex items-center justify-between z-10 shrink-0">
       <div class="flex items-center gap-3">
-        <button onclick="toggleFullScreen()" class="md:hidden text-[#aebac1] bg-[#2a3942] w-8 h-8 rounded-full flex items-center justify-center">
-            <i id="toggleIcon" class="fa-solid fa-expand text-xs"></i>
+        
+        <button onclick="goBack()" class="md:hidden text-[#e9edef] mr-2">
+            <i class="fa-solid fa-arrow-left text-xl"></i>
         </button>
         
-        <div class="font-bold text-[#e9edef]">Current Chat</div>
+        <div class="w-9 h-9 rounded-full bg-gray-500 flex items-center justify-center text-white">
+           <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="font-bold text-[#e9edef]" id="headerTitle">Select Chat</div>
       </div>
     </div>
 
     <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 pb-20 md:pb-4">
        </div>
 
-    <div class="bg-[#202c33] p-2 flex gap-2 items-center shrink-0">
+    <form class="bg-[#202c33] p-2 flex gap-2 items-center shrink-0" onsubmit="event.preventDefault(); sendReply();">
       
-      <input id="replyInput" type="text" placeholder="Type a message..." 
-        class="dark-input flex-1 p-3 rounded-lg focus:outline-none text-base"
-        onkeydown="if(event.key === 'Enter') sendReply()">
+      <input id="replyInput" type="text" placeholder="Message" autocomplete="off" enterkeyhint="send"
+        class="flex-1 bg-[#2a3942] text-white p-3 rounded-lg border-none focus:outline-none text-base placeholder-[#8696a0]"
+      >
         
-      <button onclick="sendReply()" class="bg-[#00a884] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
+      <button type="submit" class="bg-[#00a884] text-white w-10 h-10 rounded-full flex items-center justify-center shrink-0">
         <i class="fa-solid fa-paper-plane"></i>
       </button>
-    </div>
+    </form>
+
   </div>
 
   <script>
-    // Mobile Toggle Logic
-    let isFullScreen = false;
-    function toggleFullScreen() {
-      const sb = document.getElementById('sidebarContainer');
-      const icon = document.getElementById('toggleIcon');
-      isFullScreen = !isFullScreen;
-      if(isFullScreen) {
-        sb.style.display = 'none';
-        icon.classList.replace('fa-expand', 'fa-compress');
-      } else {
-        sb.style.display = 'flex';
-        icon.classList.replace('fa-compress', 'fa-expand');
+    // --- UI NAVIGATION FUNCTIONS ---
+    
+    function showChatUI() {
+      // Mobile: Sidebar chupao, Chat dikhao
+      if (window.innerWidth < 768) {
+        document.getElementById('sidebarContainer').classList.add('hidden-mobile');
+        document.getElementById('chatContainer').classList.remove('hidden');
+        document.getElementById('chatContainer').classList.add('flex-mobile');
       }
+      // Auto Focus on Input (Taaki tap na karna pade)
+      setTimeout(() => {
+          document.getElementById('replyInput').focus();
+      }, 300);
+    }
+
+    function goBack() {
+      // Mobile: Chat chupao, Sidebar dikhao
+      document.getElementById('sidebarContainer').classList.remove('hidden-mobile');
+      document.getElementById('chatContainer').classList.add('hidden');
+      document.getElementById('chatContainer').classList.remove('flex-mobile');
+      
+      // Keyboard hide karne ke liye
+      document.getElementById('replyInput').blur();
     }
   </script>
-  
-  <script src="/app.js"></script>
 
+  <script>
+    // Maine app.js ka logic yahan embed kar diya hai taaki 
+    // Navigation functions (showChatUI) sahi se connect ho jayein.
+    
+    let active = null;
+    const replyInput = document.getElementById("replyInput");
+    const messagesBox = document.getElementById("messages");
+
+    async function loadChats() {
+      try {
+        const r = await fetch("/chats");
+        const chats = await r.json();
+        const list = document.getElementById("chatList");
+        list.innerHTML = "";
+        
+        chats.forEach(c => {
+          const d = document.createElement("div");
+          d.className = "p-3 border-b border-[#2f3b43] hover:bg-[#202c33] cursor-pointer flex items-center gap-3 transition text-[#e9edef]";
+          d.innerHTML = `
+            <div class="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-white shrink-0">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold truncate text-sm">${c._id}</div>
+              <div class="text-xs text-[#8696a0]">Tap to chat</div>
+            </div>
+          `;
+          d.onclick = () => openChat(c._id);
+          list.appendChild(d);
+        });
+      } catch(e) { console.error(e); }
+    }
+
+    async function openChat(n) {
+      active = n;
+      document.getElementById("headerTitle").innerText = n;
+      
+      // 1. UI Switch (Mobile me Chat kholo)
+      showChatUI(); 
+
+      messagesBox.innerHTML = '<div class="text-center text-[#8696a0] text-xs mt-4">Loading...</div>';
+
+      try {
+        const r = await fetch("/messages/" + n);
+        const msgs = await r.json();
+        messagesBox.innerHTML = ""; 
+
+        msgs.forEach(m => {
+          const d = document.createElement("div");
+          d.innerText = m.text || "[media]";
+          
+          // Green Bubble Logic
+          const dir = (m.direction || "").toLowerCase();
+          if (dir === 'outbound' || dir === 'sent' || dir === 'out') {
+            d.className = "sent"; 
+          }
+          messagesBox.appendChild(d);
+        });
+        scrollToBottom();
+      } catch(e) { console.error(e); }
+    }
+
+    async function sendReply() {
+      const t = replyInput.value;
+      if (!t || !active) return;
+
+      // Optimistic UI
+      const d = document.createElement("div");
+      d.innerText = t;
+      d.className = "sent"; 
+      messagesBox.appendChild(d);
+      scrollToBottom();
+
+      replyInput.value = ""; 
+      // Focus wapas input pe (taaki lagaatar type kar sake)
+      replyInput.focus();
+
+      try {
+        await fetch("/reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: active, message: t })
+        });
+      } catch(e) { alert("Error sending"); }
+    }
+
+    function scrollToBottom() {
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    // Start
+    loadChats();
+    // setInterval(loadChats, 5000); // Uncomment if needed
+  </script>
 </body>
 </html>
