@@ -1,11 +1,75 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#075e54;display:flex;align-items:center;justify-content:center;height:100vh">
-<form method="POST" action="/login" style="background:white;padding:30px">
-  <h3>Admin Login</h3>
-  <input name="username" placeholder="Username" required><br><br>
-  <input name="password" type="password" placeholder="Password" required><br><br>
-  <button>Login</button>
-</form>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Animation for fading in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black h-screen flex items-center justify-center font-sans">
+
+    <div class="animate-fade-in bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl shadow-2xl w-full max-w-sm mx-4">
+        
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-500 text-white mb-4 shadow-lg shadow-teal-500/50">
+                <i class="fa-solid fa-user-shield text-2xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-white tracking-wide">Admin Panel</h2>
+            <p class="text-gray-400 text-sm mt-1">Please sign in to continue</p>
+        </div>
+
+        <form method="POST" action="/login" class="space-y-6">
+            
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-user text-teal-400"></i>
+                </div>
+                <input 
+                    name="username" 
+                    type="text" 
+                    placeholder="Username" 
+                    required 
+                    class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition duration-200 placeholder-gray-500"
+                >
+            </div>
+
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-lock text-teal-400"></i>
+                </div>
+                <input 
+                    name="password" 
+                    type="password" 
+                    placeholder="Password" 
+                    required 
+                    class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600 text-white rounded-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition duration-200 placeholder-gray-500"
+                >
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-teal-500/30 transform transition hover:-translate-y-1 duration-200"
+            >
+                LOGIN
+            </button>
+            
+            <div class="text-center mt-4">
+                <a href="#" class="text-sm text-gray-400 hover:text-teal-400 transition">Forgot Password?</a>
+            </div>
+
+        </form>
+    </div>
+
 </body>
 </html>
