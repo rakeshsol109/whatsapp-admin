@@ -2,19 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WhatsApp Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Custom Scrollbar for a clean look */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Background Pattern for Chat Area */
+    /* Mobile scroll smoothness */
+    * { -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    
     .wa-bg {
       background-color: #e5ded8;
       background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d93671755d.png");
@@ -22,78 +20,102 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 h-screen flex overflow-hidden font-sans">
+<body class="bg-gray-100 h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden">
 
-  <div class="w-1/3 bg-white border-r border-gray-300 flex flex-col min-w-[300px]">
+  <div id="sidebarContainer" class="w-full md:w-[350px] h-[30%] md:h-full bg-white border-b md:border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out">
     
-    <div class="bg-gray-100 p-4 border-b border-gray-200 flex justify-between items-center h-16">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
-          <i class="fa-solid fa-user"></i>
+    <div class="bg-gray-100 p-3 border-b flex justify-between items-center h-14 shrink-0">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center">
+          <i class="fa-solid fa-user-shield text-sm"></i>
         </div>
-        <span class="font-semibold text-gray-700">Admin</span>
+        <span class="font-bold text-gray-700 text-sm">Chats</span>
       </div>
-      <a href="/logout" class="text-gray-500 hover:text-red-500 transition" title="Logout">
-        <i class="fa-solid fa-right-from-bracket text-xl"></i>
+      <a href="/logout" class="text-red-500 bg-red-50 p-2 rounded-full hover:bg-red-100">
+        <i class="fa-solid fa-power-off"></i>
       </a>
     </div>
 
-    <div class="p-3 bg-white border-b border-gray-100">
-      <div class="relative">
-        <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
-        <input type="text" placeholder="Search or start new chat" class="w-full bg-gray-100 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
-      </div>
+    <div id="chatList" class="flex-1 overflow-y-auto p-2 space-y-2 bg-white">
+      <p class="text-center text-gray-400 text-xs mt-4">Loading contacts...</p>
     </div>
-
-    <div id="chatList" class="flex-1 overflow-y-auto hover:overflow-y-scroll p-2 space-y-2">
-       </div>
   </div>
 
 
-  <div class="flex-1 flex flex-col relative">
+  <div class="flex-1 flex flex-col h-[70%] md:h-full relative bg-gray-50">
     
-    <div class="bg-gray-100 p-4 border-b border-gray-200 flex items-center justify-between h-16 shadow-sm z-10">
+    <div class="bg-white p-3 border-b flex items-center justify-between h-14 shadow-sm z-20 shrink-0">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white">
-          <i class="fa-brands fa-whatsapp text-2xl"></i>
-        </div>
-        <div>
-          <h3 class="font-semibold text-gray-800">Current Chat</h3>
-          <p class="text-xs text-green-600">Online</p>
+        <button onclick="toggleFullScreen()" class="md:hidden w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 active:scale-95 transition">
+          <i id="toggleIcon" class="fa-solid fa-expand"></i>
+        </button>
+
+        <div class="flex flex-col">
+          <h3 class="font-bold text-gray-800 text-sm leading-tight">Current Chat</h3>
+          <span class="text-[10px] text-green-500 font-medium">Online</span>
         </div>
       </div>
-      <div class="text-gray-500 space-x-4">
-        <i class="fa-solid fa-magnifying-glass cursor-pointer hover:text-gray-700"></i>
-        <i class="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-gray-700"></i>
+      
+      <div class="flex gap-4 text-gray-500">
+        <i class="fa-solid fa-phone cursor-pointer"></i>
+        <i class="fa-solid fa-video cursor-pointer"></i>
       </div>
     </div>
 
-    <div id="messages" class="wa-bg flex-1 overflow-y-auto p-6 space-y-4">
-        <div class="text-center text-xs text-gray-500 my-4 bg-white/50 py-1 rounded-full w-fit mx-auto px-3 shadow-sm">
-            Messages are end-to-end encrypted
-        </div>
+    <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 space-y-3 pb-20 md:pb-4">
+       <div class="text-center text-xs text-gray-500 bg-white/80 py-1 px-3 rounded-full w-fit mx-auto shadow-sm">
+         Select a contact from above to start
+       </div>
     </div>
 
-    <div class="bg-gray-100 p-3 px-4 flex items-center gap-4 border-t border-gray-200">
-      <i class="fa-regular fa-face-smile text-2xl text-gray-500 cursor-pointer hover:text-gray-700"></i>
-      <i class="fa-solid fa-paperclip text-xl text-gray-500 cursor-pointer hover:text-gray-700"></i>
+    <div class="bg-white p-2 md:p-3 border-t flex items-center gap-2 shrink-0">
+      <button class="text-gray-400 p-2"><i class="fa-solid fa-plus text-xl"></i></button>
       
       <input 
         id="replyInput" 
         type="text" 
-        placeholder="Type a message" 
-        class="flex-1 py-3 px-4 rounded-lg border-none focus:outline-none focus:ring-0 text-gray-700 placeholder-gray-500 shadow-sm"
+        placeholder="Message..." 
+        class="flex-1 bg-gray-100 text-gray-800 rounded-full py-3 px-4 focus:outline-none focus:ring-1 focus:ring-teal-500 text-base"
+        style="font-size: 16px;" 
         onkeydown="if(event.key === 'Enter') sendReply()"
       >
       
-      <button onclick="sendReply()" class="text-teal-600 hover:text-teal-700 transition transform hover:scale-110">
-        <i class="fa-solid fa-paper-plane text-2xl"></i>
+      <button onclick="sendReply()" class="w-10 h-10 bg-teal-600 rounded-full text-white flex items-center justify-center shadow-md active:scale-90 transition">
+        <i class="fa-solid fa-paper-plane text-sm"></i>
       </button>
     </div>
-
   </div>
 
-<script src="/app.js"></script>
+  <script>
+    let isFullScreen = false;
+    const sidebar = document.getElementById('sidebarContainer');
+    const toggleIcon = document.getElementById('toggleIcon');
 
+    function toggleFullScreen() {
+      // Mobile only function to hide/show contact list
+      isFullScreen = !isFullScreen;
+      
+      if (isFullScreen) {
+        // Hide sidebar (Contact List)
+        sidebar.style.display = 'none';
+        // Change icon to 'Compress' (or List icon)
+        toggleIcon.classList.remove('fa-expand');
+        toggleIcon.classList.add('fa-list');
+      } else {
+        // Show sidebar
+        sidebar.style.display = 'flex';
+        // Change icon back to 'Expand'
+        toggleIcon.classList.remove('fa-list');
+        toggleIcon.classList.add('fa-expand');
+      }
+    }
+
+    // Auto-focus input when clicking chat on desktop
+    document.getElementById('messages').addEventListener('click', () => {
+      document.getElementById('replyInput').focus();
+    });
+  </script>
+
+  <script src="/app.js"></script>
 </body>
 </html>
