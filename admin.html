@@ -8,114 +8,112 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Mobile scroll smoothness */
+    /* Mobile Polish */
     * { -webkit-tap-highlight-color: transparent; }
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     
+    /* Background Pattern */
     .wa-bg {
-      background-color: #e5ded8;
+      background-color: #efeae2;
       background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d93671755d.png");
-      background-blend-mode: overlay;
+      background-size: 400px;
+    }
+
+    /* ---- MAGIC MESSAGES CSS ---- */
+    /* Ye CSS automatic har message ko bubble bana degi */
+    
+    /* Rule 1: Har message box ke andar ka div */
+    #messages > div {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        max-width: 80%;
+        width: fit-content;
+        border-radius: 0px 10px 10px 10px;
+        font-size: 15px;
+        line-height: 1.4;
+        position: relative;
+        box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+        word-wrap: break-word;
+        
+        /* Default: White Bubble (Left Side) */
+        background-color: white; 
+        color: #111b21;
+        margin-right: auto; 
+    }
+
+    /* Rule 2: Agar message me 'sent' ya 'me' class ho toh Green kar do */
+    #messages > div.sent, 
+    #messages > div.me,
+    #messages > div.admin {
+        background-color: #d9fdd3; /* WhatsApp Green */
+        margin-left: auto; /* Push to Right */
+        margin-right: 0;
+        border-radius: 10px 0px 10px 10px;
+    }
+
+    /* Rule 3: Time stamp (agar koi small tag ho) */
+    #messages > div small {
+        display: block;
+        text-align: right;
+        font-size: 10px;
+        color: #999;
+        margin-top: 2px;
     }
   </style>
 </head>
 <body class="bg-gray-100 h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden">
 
-  <div id="sidebarContainer" class="w-full md:w-[350px] h-[30%] md:h-full bg-white border-b md:border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out">
-    
-    <div class="bg-gray-100 p-3 border-b flex justify-between items-center h-14 shrink-0">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center">
-          <i class="fa-solid fa-user-shield text-sm"></i>
-        </div>
-        <span class="font-bold text-gray-700 text-sm">Chats</span>
-      </div>
-      <a href="/logout" class="text-red-500 bg-red-50 p-2 rounded-full hover:bg-red-100">
-        <i class="fa-solid fa-power-off"></i>
-      </a>
+  <div id="sidebarContainer" class="w-full md:w-[350px] h-[35%] md:h-full bg-white border-r border-gray-300 flex flex-col">
+    <div class="bg-gray-100 p-3 border-b h-14 flex justify-between items-center shrink-0">
+       <div class="flex items-center gap-2 font-bold text-gray-600">
+         <i class="fa-solid fa-users"></i> Contacts
+       </div>
+       <a href="/logout" class="text-red-500"><i class="fa-solid fa-power-off"></i></a>
     </div>
-
-    <div id="chatList" class="flex-1 overflow-y-auto p-2 space-y-2 bg-white">
-      <p class="text-center text-gray-400 text-xs mt-4">Loading contacts...</p>
+    
+    <div id="chatList" class="flex-1 overflow-y-auto p-2 bg-white">
+        <div class="text-center text-gray-400 text-xs mt-10">Loading...</div>
     </div>
   </div>
 
-
-  <div class="flex-1 flex flex-col h-[70%] md:h-full relative bg-gray-50">
+  <div class="flex-1 flex flex-col h-[65%] md:h-full relative bg-[#efeae2]">
     
-    <div class="bg-white p-3 border-b flex items-center justify-between h-14 shadow-sm z-20 shrink-0">
+    <div class="bg-white p-2 px-4 border-b h-14 flex items-center justify-between shadow-sm z-10 shrink-0">
       <div class="flex items-center gap-3">
-        <button onclick="toggleFullScreen()" class="md:hidden w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 active:scale-95 transition">
-          <i id="toggleIcon" class="fa-solid fa-expand"></i>
+        <button onclick="toggleFullScreen()" class="md:hidden bg-gray-100 p-2 rounded-full w-8 h-8 flex items-center justify-center text-gray-600">
+            <i id="toggleIcon" class="fa-solid fa-expand text-xs"></i>
         </button>
-
-        <div class="flex flex-col">
-          <h3 class="font-bold text-gray-800 text-sm leading-tight">Current Chat</h3>
-          <span class="text-[10px] text-green-500 font-medium">Online</span>
-        </div>
-      </div>
-      
-      <div class="flex gap-4 text-gray-500">
-        <i class="fa-solid fa-phone cursor-pointer"></i>
-        <i class="fa-solid fa-video cursor-pointer"></i>
+        <div class="font-bold text-gray-800">Chat</div>
       </div>
     </div>
 
-    <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 space-y-3 pb-20 md:pb-4">
-       <div class="text-center text-xs text-gray-500 bg-white/80 py-1 px-3 rounded-full w-fit mx-auto shadow-sm">
-         Select a contact from above to start
+    <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 pb-20 md:pb-4">
        </div>
-    </div>
 
-    <div class="bg-white p-2 md:p-3 border-t flex items-center gap-2 shrink-0">
-      <button class="text-gray-400 p-2"><i class="fa-solid fa-plus text-xl"></i></button>
-      
-      <input 
-        id="replyInput" 
-        type="text" 
-        placeholder="Message..." 
-        class="flex-1 bg-gray-100 text-gray-800 rounded-full py-3 px-4 focus:outline-none focus:ring-1 focus:ring-teal-500 text-base"
-        style="font-size: 16px;" 
-        onkeydown="if(event.key === 'Enter') sendReply()"
-      >
-      
-      <button onclick="sendReply()" class="w-10 h-10 bg-teal-600 rounded-full text-white flex items-center justify-center shadow-md active:scale-90 transition">
-        <i class="fa-solid fa-paper-plane text-sm"></i>
+    <div class="bg-gray-100 p-2 flex gap-2 items-center shrink-0">
+      <input id="replyInput" type="text" placeholder="Type a message..." 
+        class="flex-1 p-3 rounded-full border-none focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-sm"
+        onkeydown="if(event.key === 'Enter') sendReply()">
+      <button onclick="sendReply()" class="bg-teal-600 text-white w-10 h-10 rounded-full shadow flex items-center justify-center">
+        <i class="fa-solid fa-paper-plane"></i>
       </button>
     </div>
   </div>
 
   <script>
     let isFullScreen = false;
-    const sidebar = document.getElementById('sidebarContainer');
-    const toggleIcon = document.getElementById('toggleIcon');
-
     function toggleFullScreen() {
-      // Mobile only function to hide/show contact list
+      const sb = document.getElementById('sidebarContainer');
+      const icon = document.getElementById('toggleIcon');
       isFullScreen = !isFullScreen;
-      
-      if (isFullScreen) {
-        // Hide sidebar (Contact List)
-        sidebar.style.display = 'none';
-        // Change icon to 'Compress' (or List icon)
-        toggleIcon.classList.remove('fa-expand');
-        toggleIcon.classList.add('fa-list');
+      if(isFullScreen) {
+        sb.style.display = 'none';
+        icon.classList.replace('fa-expand', 'fa-compress');
       } else {
-        // Show sidebar
-        sidebar.style.display = 'flex';
-        // Change icon back to 'Expand'
-        toggleIcon.classList.remove('fa-list');
-        toggleIcon.classList.add('fa-expand');
+        sb.style.display = 'flex';
+        icon.classList.replace('fa-compress', 'fa-expand');
       }
     }
-
-    // Auto-focus input when clicking chat on desktop
-    document.getElementById('messages').addEventListener('click', () => {
-      document.getElementById('replyInput').focus();
-    });
   </script>
-
   <script src="/app.js"></script>
 </body>
 </html>
