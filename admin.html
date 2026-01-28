@@ -3,103 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>WhatsApp Admin</title>
+  <title>WhatsApp Dark Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* Mobile Polish */
-    * { -webkit-tap-highlight-color: transparent; }
-    
-    /* Background Pattern */
+    /* 1. DARK MODE SETTINGS (Photo Match) */
+    body {
+      background-color: #0b141a; /* Poora Background Black */
+      color: #e9edef; /* Text White */
+    }
+
+    /* Scrollbar Dark */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #374045; border-radius: 4px; }
+
+    /* Chat Background Image (Dark) */
     .wa-bg {
-      background-color: #efeae2;
+      background-color: #0b141a;
       background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d93671755d.png");
       background-size: 400px;
+      opacity: 0.9;
     }
 
-    /* ---- MAGIC MESSAGES CSS ---- */
-    /* Ye CSS automatic har message ko bubble bana degi */
+    /* ---- MESSAGE BUBBLES CSS (Dark Mode) ---- */
     
-    /* Rule 1: Har message box ke andar ka div */
     #messages > div {
-        padding: 8px 12px;
-        margin-bottom: 8px;
+        padding: 6px 10px;
+        margin-bottom: 2px;
         max-width: 80%;
         width: fit-content;
-        border-radius: 0px 10px 10px 10px;
+        border-radius: 10px;
         font-size: 15px;
-        line-height: 1.4;
+        line-height: 1.3;
         position: relative;
-        box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+        box-shadow: 0 1px 0.5px rgba(0,0,0,0.3);
         word-wrap: break-word;
         
-        /* Default: White Bubble (Left Side) */
-        background-color: white; 
-        color: #111b21;
+        /* RECEIVED MESSAGE (Left Side) - Dark Gray */
+        background-color: #202c33; 
+        color: #e9edef;
         margin-right: auto; 
+        border-radius: 0px 10px 10px 10px;
     }
 
-    /* Rule 2: Agar message me 'sent' ya 'me' class ho toh Green kar do */
+    /* SENT MESSAGE (Right Side) - Dark Green (Photo Match) */
     #messages > div.sent, 
     #messages > div.me,
     #messages > div.admin {
-        background-color: #d9fdd3; /* WhatsApp Green */
-        margin-left: auto; /* Push to Right */
+        background-color: #005c4b; /* <-- YE HAI DARK GREEN COLOR */
+        color: #e9edef;
+        margin-left: auto; 
         margin-right: 0;
         border-radius: 10px 0px 10px 10px;
     }
-
-    /* Rule 3: Time stamp (agar koi small tag ho) */
-    #messages > div small {
-        display: block;
-        text-align: right;
-        font-size: 10px;
-        color: #999;
-        margin-top: 2px;
+    
+    /* Input Fields Dark Style */
+    .dark-input {
+      background-color: #2a3942;
+      color: white;
+      border: none;
     }
+    .dark-input::placeholder { color: #8696a0; }
   </style>
 </head>
-<body class="bg-gray-100 h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden">
+<body class="h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden bg-[#0b141a]">
 
-  <div id="sidebarContainer" class="w-full md:w-[350px] h-[35%] md:h-full bg-white border-r border-gray-300 flex flex-col">
-    <div class="bg-gray-100 p-3 border-b h-14 flex justify-between items-center shrink-0">
-       <div class="flex items-center gap-2 font-bold text-gray-600">
-         <i class="fa-solid fa-users"></i> Contacts
+  <div id="sidebarContainer" class="w-full md:w-[350px] h-[35%] md:h-full border-r border-[#2f3b43] flex flex-col bg-[#111b21]">
+    
+    <div class="bg-[#202c33] p-3 border-b border-[#2f3b43] h-14 flex justify-between items-center shrink-0">
+       <div class="flex items-center gap-2 font-bold text-[#aebac1]">
+         <div class="w-8 h-8 rounded-full bg-[#005c4b] flex items-center justify-center text-white">
+           <i class="fa-solid fa-user"></i>
+         </div>
+         <span>Chats</span>
        </div>
-       <a href="/logout" class="text-red-500"><i class="fa-solid fa-power-off"></i></a>
+       <a href="/logout" class="text-[#aebac1] hover:text-white"><i class="fa-solid fa-power-off"></i></a>
     </div>
     
-    <div id="chatList" class="flex-1 overflow-y-auto p-2 bg-white">
-        <div class="text-center text-gray-400 text-xs mt-10">Loading...</div>
+    <div id="chatList" class="flex-1 overflow-y-auto bg-[#111b21]">
+        <div class="text-center text-[#8696a0] text-xs mt-10">Loading chats...</div>
     </div>
   </div>
 
-  <div class="flex-1 flex flex-col h-[65%] md:h-full relative bg-[#efeae2]">
+
+  <div class="flex-1 flex flex-col h-[65%] md:h-full relative bg-[#0b141a]">
     
-    <div class="bg-white p-2 px-4 border-b h-14 flex items-center justify-between shadow-sm z-10 shrink-0">
+    <div class="bg-[#202c33] p-2 px-4 border-b border-[#2f3b43] h-14 flex items-center justify-between z-10 shrink-0">
       <div class="flex items-center gap-3">
-        <button onclick="toggleFullScreen()" class="md:hidden bg-gray-100 p-2 rounded-full w-8 h-8 flex items-center justify-center text-gray-600">
+        <button onclick="toggleFullScreen()" class="md:hidden text-[#aebac1] bg-[#2a3942] w-8 h-8 rounded-full flex items-center justify-center">
             <i id="toggleIcon" class="fa-solid fa-expand text-xs"></i>
         </button>
-        <div class="font-bold text-gray-800">Chat</div>
+        
+        <div class="font-bold text-[#e9edef]">Current Chat</div>
       </div>
     </div>
 
     <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 pb-20 md:pb-4">
        </div>
 
-    <div class="bg-gray-100 p-2 flex gap-2 items-center shrink-0">
+    <div class="bg-[#202c33] p-2 flex gap-2 items-center shrink-0">
+      
       <input id="replyInput" type="text" placeholder="Type a message..." 
-        class="flex-1 p-3 rounded-full border-none focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-sm"
+        class="dark-input flex-1 p-3 rounded-lg focus:outline-none text-base"
         onkeydown="if(event.key === 'Enter') sendReply()">
-      <button onclick="sendReply()" class="bg-teal-600 text-white w-10 h-10 rounded-full shadow flex items-center justify-center">
+        
+      <button onclick="sendReply()" class="bg-[#00a884] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
         <i class="fa-solid fa-paper-plane"></i>
       </button>
     </div>
   </div>
 
   <script>
+    // Mobile Toggle Logic
     let isFullScreen = false;
     function toggleFullScreen() {
       const sb = document.getElementById('sidebarContainer');
@@ -114,6 +131,8 @@
       }
     }
   </script>
+  
   <script src="/app.js"></script>
+
 </body>
 </html>
