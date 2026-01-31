@@ -4,25 +4,26 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const path = require("path");
-const fs = require("fs"); // 🟢 File System added
+const fs = require("fs");
 
 const Message = require("./models/Message");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// 🟢 Create media folder if not exists
+// 🟢 1. Check Media Folder
 const MEDIA_DIR = path.join(__dirname, "public", "media");
 if (!fs.existsSync(MEDIA_DIR)) {
+  console.log("📁 Creating media folder...");
   fs.mkdirSync(MEDIA_DIR, { recursive: true });
 }
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static("public")); // Important for serving images
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || "secret_key",
+  secret: process.env.SESSION_SECRET || "supersecret",
   resave: false,
   saveUninitialized: false
 }));
@@ -32,15 +33,8 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ Mongo Error", err));
 
-// 🔐 Auth
-function auth(req, res, next) {
-  if (req.session.loggedIn) return next();
-  res.redirect("/login");
-}
-
-// 🔐 Login Routes
+// 🔐 Login Routes (Shortened)
 app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "login.html")));
-
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
@@ -49,39 +43,48 @@ app.post("/login", (req, res) => {
   }
   res.send("❌ Invalid Login");
 });
+function auth(req, res, next) {
+  if (req.session.loggedIn) return next();
+  res.redirect("/login");
+}
 
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/login"));
-});
-
-// 🔹 Webhook verify
-app.get("/webhook", (req, res) => {
-  if (req.query["hub.mode"] === "subscribe" && req.query["hub.verify_token"] === process.env.VERIFY_TOKEN) {
-    return res.send(req.query["hub.challenge"]);
+// 🟢 Helper: Get Extension from Mime
+function getExtension(mime) {
+  switch (mime) {
+    case "image/jpeg": return "jpg";
+    case "image/png": return "png";
+    case "image/webp": return "webp";
+    case "audio/ogg": return "ogg"; // WhatsApp audio usually ogg
+    case "audio/mpeg": return "mp3";
+    case "application/pdf": return "pdf";
+    case "application/msword": return "doc";
+    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": return "docx";
+    case "video/mp4": return "mp4";
+    default: return "bin";
   }
-  res.sendStatus(403);
-});
+}
 
-// 🟢 Helper Function: Download Media from WhatsApp
+// 🟢 Helper: Download Media
 async function downloadMedia(mediaId, mimeType) {
   try {
-    // 1. Get URL from Facebook Graph API
+    console.log(`⏳ Requesting URL for ID: ${mediaId}`);
+    
+    // 1. Get Download URL
     const urlRes = await axios.get(
-      `https://graph.facebook.com/v22.0/${mediaId}`,
+      `https://graph.facebook.com/v19.0/${mediaId}`, // Version 19 is stable
       { headers: { Authorization: `Bearer ${process.env.TOKEN}` } }
     );
-    const mediaUrl = urlRes.data.url;
-
-    // Determine extension
-    let ext = mimeType.split("/")[1];
-    if (ext === "plain") ext = "txt"; // fix for text files
-    if (ext.includes("word")) ext = "docx";
-    if (ext.includes("pdf")) ext = "pdf";
     
+    const mediaUrl = urlRes.data.url;
+    console.log(`🔗 Got URL: ${mediaUrl}`);
+
+    // 2. Setup File Path
+    const ext = getExtension(mimeType);
     const fileName = `${mediaId}.${ext}`;
     const filePath = path.join(MEDIA_DIR, fileName);
+    const publicPath = `/media/${fileName}`; // Path for frontend
 
-    // 2. Download the binary data
+    // 3. Download Stream
     const writer = fs.createWriteStream(filePath);
     const response = await axios({
       url: mediaUrl,
@@ -93,55 +96,77 @@ async function downloadMedia(mediaId, mimeType) {
     response.data.pipe(writer);
 
     return new Promise((resolve, reject) => {
-      writer.on("finish", () => resolve(`/media/${fileName}`)); // Return public path
-      writer.on("error", reject);
+      writer.on("finish", () => {
+        console.log(`✅ File Saved: ${filePath}`);
+        resolve(publicPath);
+      });
+      writer.on("error", (err) => {
+        console.error("❌ Write Error:", err);
+        reject(err);
+      });
     });
 
   } catch (error) {
-    console.error("❌ Media Download Error:", error.message);
+    console.error("❌ Download Failed:", error.response ? error.response.data : error.message);
     return null;
   }
 }
 
-// 🔹 Webhook receive (Text + Media + Status)
+// 🔹 Webhook Verify
+app.get("/webhook", (req, res) => {
+  if (req.query["hub.mode"] === "subscribe" && req.query["hub.verify_token"] === process.env.VERIFY_TOKEN) {
+    return res.send(req.query["hub.challenge"]);
+  }
+  res.sendStatus(403);
+});
+
+// 🔹 Webhook Receive
 app.post("/webhook", async (req, res) => {
+  // console.log("📨 Webhook Hit!"); // Debug log
   const value = req.body.entry?.[0]?.changes?.[0]?.value;
   const msg = value?.messages?.[0];
   const status = value?.statuses?.[0];
 
   if (msg) {
-    let media = null;
-    let text = msg.text?.body || "";
+    console.log(`📩 New Message from ${msg.from} Type: ${msg.type}`);
+    
+    let mediaData = null;
+    let textBody = msg.text?.body || "";
 
-    // 🟢 Handle Media Types
-    if (msg.type === "image" || msg.type === "document" || msg.type === "audio" || msg.type === "video" || msg.type === "sticker") {
-      const mediaType = msg.type;
-      const mediaObj = msg[mediaType]; // e.g. msg.image
+    // Handle Media
+    if (["image", "document", "audio", "video", "sticker"].includes(msg.type)) {
+      const mediaObj = msg[msg.type];
+      console.log(`📎 Found Media: ${msg.type}, ID: ${mediaObj.id}`);
+
+      // Download
+      const savedPath = await downloadMedia(mediaObj.id, mediaObj.mime_type);
       
-      // Download File
-      const publicPath = await downloadMedia(mediaObj.id, mediaObj.mime_type);
-      
-      media = {
-        type: mediaType,
-        id: mediaObj.id,
-        mime: mediaObj.mime_type,
-        url: publicPath, // 🟢 Saved local path
-        caption: mediaObj.caption || "" // Image caption fix
-      };
-      
-      if (!text && mediaObj.caption) text = mediaObj.caption;
+      if (savedPath) {
+        mediaData = {
+          type: msg.type,
+          id: mediaObj.id,
+          mime: mediaObj.mime_type,
+          url: savedPath // 🟢 Saving the path!
+        };
+        // Use caption if text is empty
+        if (!textBody && mediaObj.caption) textBody = mediaObj.caption;
+      }
     }
 
-    await Message.create({
-      from: msg.from,
-      text: text,
-      media: media,
-      direction: "in",
-      status: "seen"
-    });
+    try {
+      await Message.create({
+        from: msg.from,
+        text: textBody,
+        media: mediaData,
+        direction: "in",
+        status: "seen"
+      });
+      console.log("💾 Message Saved to DB");
+    } catch (dbError) {
+      console.error("❌ DB Save Error:", dbError);
+    }
   }
 
-  // Handle Status Update
   if (status) {
     await Message.updateMany({ to: status.recipient_id }, { status: status.status });
   }
@@ -149,7 +174,7 @@ app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
 });
 
-// 🔹 Chat list
+// 🔹 API Routes
 app.get("/chats", auth, async (req, res) => {
   const chats = await Message.aggregate([
     { $sort: { createdAt: -1 } },
@@ -158,46 +183,33 @@ app.get("/chats", auth, async (req, res) => {
   res.json(chats);
 });
 
-// 🔹 Messages
 app.get("/messages/:number", auth, async (req, res) => {
   const num = req.params.number;
   await Message.updateMany({ from: num, direction: "in" }, { status: "seen" });
-  
   const msgs = await Message.find({ $or: [{ from: num }, { to: num }] }).sort("createdAt");
   res.json(msgs);
 });
 
-// 🔹 Send reply
 app.post("/reply", auth, async (req, res) => {
   const { to, message } = req.body;
-  
-  // Facebook API call
-  await axios.post(
-    `https://graph.facebook.com/v22.0/${process.env.PHONE_NUMBER_ID}/messages`,
-    {
-      messaging_product: "whatsapp",
-      to,
-      text: { body: message }
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.TOKEN}`,
-        "Content-Type": "application/json"
-      }
-    }
-  );
-
-  await Message.create({
-    to,
-    text: message,
-    direction: "out",
-    status: "sent"
-  });
-
-  res.json({ success: true });
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+      { messaging_product: "whatsapp", to, text: { body: message } },
+      { headers: { Authorization: `Bearer ${process.env.TOKEN}`, "Content-Type": "application/json" } }
+    );
+    await Message.create({ to, text: message, direction: "out", status: "sent" });
+    res.json({ success: true });
+  } catch (e) {
+    console.error("❌ Reply Error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// 🔹 Admin UI
+// UI
 app.get("/", auth, (req, res) => res.sendFile(path.join(__dirname, "admin.html")));
 
-app.listen(PORT, () => console.log("🔥 WhatsApp Admin LIVE on port", PORT));
+app.listen(PORT, () => {
+  console.log("🔥 Server running on port", PORT);
+  console.log("📂 Media path checked:", MEDIA_DIR);
+});
