@@ -7,8 +7,9 @@ const MessageSchema = new mongoose.Schema({
 
   media: {
     type: { type: String }, // image | audio | document
-    id: String,
-    mime: String
+    id: String,             // WhatsApp Media ID
+    mime: String,           // File Type (image/jpeg etc)
+    url: String             // 🟢 NEW: File Path for Frontend (/media/filename.jpg)
   },
 
   direction: String, // in | out
