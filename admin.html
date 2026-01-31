@@ -6,50 +6,25 @@
   <title>WhatsApp Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <style>
-    /* 1. DARK MODE & SMOOTHNESS */
     * { -webkit-tap-highlight-color: transparent; }
     body { background-color: #0b141a; color: #e9edef; }
-
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: #374045; border-radius: 4px; }
-
-    /* Chat Background */
     .wa-bg {
       background-color: #0b141a;
       background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d93671755d.png");
-      background-size: 400px;
-      opacity: 0.9;
+      background-size: 400px; opacity: 0.9;
     }
-
-    /* ---- MESSAGE BUBBLES ---- */
     #messages > div {
-        padding: 6px 10px;
-        margin-bottom: 4px; /* Space between bubbles */
-        max-width: 85%;
-        width: fit-content;
-        border-radius: 0px 10px 10px 10px;
-        font-size: 15px;
-        line-height: 1.3;
-        box-shadow: 0 1px 0.5px rgba(0,0,0,0.3);
-        word-wrap: break-word;
-        background-color: #202c33; /* Received: Dark Gray */
-        color: #e9edef;
-        margin-right: auto; 
+        padding: 6px 10px; margin-bottom: 4px; max-width: 85%; width: fit-content;
+        border-radius: 0px 10px 10px 10px; font-size: 15px; line-height: 1.3;
+        background-color: #202c33; color: #e9edef; margin-right: auto; 
     }
-
-    /* Sent Message: Dark Green */
     #messages > div.sent {
-        background-color: #005c4b; 
-        color: #e9edef;
-        margin-left: auto; 
-        margin-right: 0;
+        background-color: #005c4b; margin-left: auto; margin-right: 0;
         border-radius: 10px 0px 10px 10px;
     }
-    
-    /* Utility Classes for Mobile View Switching */
     .hidden-mobile { display: none !important; }
     .flex-mobile { display: flex !important; }
   </style>
@@ -57,86 +32,63 @@
 <body class="h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden bg-[#0b141a]">
 
   <div id="sidebarContainer" class="w-full md:w-[350px] h-full border-r border-[#2f3b43] flex flex-col bg-[#111b21]">
-    
     <div class="bg-[#202c33] p-3 border-b border-[#2f3b43] h-14 flex justify-between items-center shrink-0">
        <div class="flex items-center gap-2 font-bold text-[#aebac1]">
-         <div class="w-8 h-8 rounded-full bg-[#005c4b] flex items-center justify-center text-white">
-           <i class="fa-solid fa-user"></i>
-         </div>
+         <div class="w-8 h-8 rounded-full bg-[#005c4b] flex items-center justify-center text-white"><i class="fa-solid fa-user"></i></div>
          <span>Chats</span>
        </div>
        <a href="/logout" class="text-[#aebac1]"><i class="fa-solid fa-power-off"></i></a>
     </div>
-    
     <div id="chatList" class="flex-1 overflow-y-auto bg-[#111b21]">
         <div class="text-center text-[#8696a0] text-xs mt-10">Loading...</div>
     </div>
   </div>
 
   <div id="chatContainer" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
-    
     <div class="bg-[#202c33] p-2 px-4 border-b border-[#2f3b43] h-14 flex items-center justify-between z-10 shrink-0">
       <div class="flex items-center gap-3">
-        
-        <button onclick="goBack()" class="md:hidden text-[#e9edef] mr-2">
-            <i class="fa-solid fa-arrow-left text-xl"></i>
-        </button>
-        
-        <div class="w-9 h-9 rounded-full bg-gray-500 flex items-center justify-center text-white">
-           <i class="fa-solid fa-user"></i>
-        </div>
+        <button onclick="goBack()" class="md:hidden text-[#e9edef] mr-2"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+        <div class="w-9 h-9 rounded-full bg-gray-500 flex items-center justify-center text-white"><i class="fa-solid fa-user"></i></div>
         <div class="font-bold text-[#e9edef]" id="headerTitle">Select Chat</div>
       </div>
     </div>
 
-    <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 pb-20 md:pb-4">
-       </div>
+    <div id="messages" class="wa-bg flex-1 overflow-y-auto p-4 pb-20 md:pb-4"></div>
 
     <form class="bg-[#202c33] p-2 flex gap-2 items-center shrink-0" onsubmit="event.preventDefault(); sendReply();">
-      
+      <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="uploadFile()">
+      <button type="button" onclick="document.getElementById('fileInput').click()" class="text-[#8696a0] w-10 h-10 flex items-center justify-center hover:text-[#aebac1]">
+        <i class="fa-solid fa-paperclip text-xl"></i>
+      </button>
       <input id="replyInput" type="text" placeholder="Message" autocomplete="off" enterkeyhint="send"
         class="flex-1 bg-[#2a3942] text-white p-3 rounded-lg border-none focus:outline-none text-base placeholder-[#8696a0]"
       >
-        
       <button type="submit" class="bg-[#00a884] text-white w-10 h-10 rounded-full flex items-center justify-center shrink-0">
         <i class="fa-solid fa-paper-plane"></i>
       </button>
     </form>
-
   </div>
 
   <script>
-    // --- UI NAVIGATION FUNCTIONS ---
-    
+    let active = null;
+    const replyInput = document.getElementById("replyInput");
+    const messagesBox = document.getElementById("messages");
+
     function showChatUI() {
-      // Mobile: Sidebar chupao, Chat dikhao
       if (window.innerWidth < 768) {
         document.getElementById('sidebarContainer').classList.add('hidden-mobile');
         document.getElementById('chatContainer').classList.remove('hidden');
         document.getElementById('chatContainer').classList.add('flex-mobile');
       }
-      // Auto Focus on Input
-      setTimeout(() => {
-          document.getElementById('replyInput').focus();
-      }, 300);
+      setTimeout(() => document.getElementById('replyInput').focus(), 300);
     }
 
     function goBack() {
-      // Mobile: Chat chupao, Sidebar dikhao
       document.getElementById('sidebarContainer').classList.remove('hidden-mobile');
       document.getElementById('chatContainer').classList.add('hidden');
       document.getElementById('chatContainer').classList.remove('flex-mobile');
-      
       document.getElementById('replyInput').blur();
     }
-  </script>
-
-  <script>
-    // --- APP LOGIC WITH MEDIA SUPPORT ---
-    
-    let active = null;
-    const replyInput = document.getElementById("replyInput");
-    const messagesBox = document.getElementById("messages");
 
     async function loadChats() {
       try {
@@ -144,120 +96,78 @@
         const chats = await r.json();
         const list = document.getElementById("chatList");
         list.innerHTML = "";
-        
         chats.forEach(c => {
           const d = document.createElement("div");
           d.className = "p-3 border-b border-[#2f3b43] hover:bg-[#202c33] cursor-pointer flex items-center gap-3 transition text-[#e9edef]";
           d.innerHTML = `
-            <div class="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-white shrink-0">
-              <i class="fa-solid fa-user"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="font-semibold truncate text-sm">${c._id}</div>
-              <div class="text-xs text-[#8696a0] truncate">${c.last || "Media file"}</div>
-            </div>
-          `;
+            <div class="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 min-w-0"><div class="font-semibold truncate text-sm">${c._id}</div><div class="text-xs text-[#8696a0] truncate">${c.last || "Media file"}</div></div>`;
           d.onclick = () => openChat(c._id);
           list.appendChild(d);
         });
-      } catch(e) { console.error(e); }
+      } catch(e) {}
     }
 
     async function openChat(n) {
       active = n;
       document.getElementById("headerTitle").innerText = n;
-      
       showChatUI(); 
-
       messagesBox.innerHTML = '<div class="text-center text-[#8696a0] text-xs mt-4">Loading...</div>';
-
       try {
         const r = await fetch("/messages/" + n);
         const msgs = await r.json();
         messagesBox.innerHTML = ""; 
-
         msgs.forEach(m => {
           const d = document.createElement("div");
-          
-          // 🟢 1. MEDIA DISPLAY LOGIC
           let contentHtml = "";
-
           if (m.media && m.media.url) {
              const url = m.media.url;
-             const type = m.media.type;
-
-             if (type === 'image') {
-                 // Click to open full image
-                 contentHtml += `<img src="${url}" class="rounded-lg max-w-full sm:max-w-[300px] mb-1 cursor-pointer border border-[#ffffff20]" onclick="window.open('${url}')">`;
-             } 
-             else if (type === 'audio') {
-                 contentHtml += `<audio controls src="${url}" class="max-w-[240px] mt-1 mb-1"></audio>`;
-             } 
-             else if (type === 'video') {
-                 contentHtml += `<video controls src="${url}" class="rounded-lg max-w-full sm:max-w-[300px] mb-1"></video>`;
-             }
-             else {
-                 // Document / Other files
-                 contentHtml += `
-                 <a href="${url}" target="_blank" class="flex items-center gap-2 bg-[#00000030] p-2 rounded text-sm hover:bg-[#00000050] transition text-blue-300">
-                    <i class="fa-solid fa-download"></i> 
-                    <span>Download ${type}</span>
-                 </a>`;
-             }
+             if (m.media.type === 'image') contentHtml += `<img src="${url}" class="rounded-lg max-w-[250px] mb-1 cursor-pointer border border-[#ffffff20]" onclick="window.open('${url}')">`;
+             else contentHtml += `<a href="${url}" target="_blank" class="text-blue-300"><i class="fa-solid fa-download"></i> Download File</a>`;
           }
-
-          // 🟢 2. TEXT LOGIC
-          if (m.text) {
-             contentHtml += `<div class="whitespace-pre-wrap">${m.text}</div>`;
-          }
-
-          // Fallback if empty
-          if (!contentHtml) contentHtml = "<em class='text-gray-400 text-xs'>Unsupported format</em>";
-
-          d.innerHTML = contentHtml;
-          
-          // 🟢 3. BUBBLE COLOR (Sent/Received)
-          const dir = (m.direction || "").toLowerCase();
-          if (dir === 'outbound' || dir === 'sent' || dir === 'out') {
-            d.className = "sent"; 
-          }
-          
+          if (m.text) contentHtml += `<div class="whitespace-pre-wrap">${m.text}</div>`;
+          d.innerHTML = contentHtml || "<em>Media</em>";
+          if (['outbound','sent','out'].includes((m.direction||"").toLowerCase())) d.className = "sent"; 
           messagesBox.appendChild(d);
         });
-        scrollToBottom();
-      } catch(e) { console.error(e); }
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+      } catch(e) {}
     }
 
     async function sendReply() {
       const t = replyInput.value;
       if (!t || !active) return;
-
-      // Optimistic UI
-      const d = document.createElement("div");
-      d.innerText = t;
-      d.className = "sent"; 
-      messagesBox.appendChild(d);
-      scrollToBottom();
-
+      const d = document.createElement("div"); d.innerText = t; d.className = "sent"; 
+      messagesBox.appendChild(d); messagesBox.scrollTop = messagesBox.scrollHeight;
       replyInput.value = ""; 
-      replyInput.focus();
+      await fetch("/reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: active, message: t }) });
+    }
+
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+      if (!file || !active) return;
+      
+      const d = document.createElement("div");
+      d.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending photo...`; d.className = "sent";
+      messagesBox.appendChild(d); messagesBox.scrollTop = messagesBox.scrollHeight;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("to", active);
+      const caption = replyInput.value;
+      if(caption) formData.append("caption", caption);
 
       try {
-        await fetch("/reply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to: active, message: t })
-        });
-      } catch(e) { alert("Error sending"); }
+        const res = await fetch("/send-media", { method: "POST", body: formData });
+        const result = await res.json();
+        if (result.success) { d.innerHTML = `📷 Photo Sent`; replyInput.value = ""; } 
+        else { d.innerText = "❌ Failed"; d.style.backgroundColor = "red"; }
+      } catch (e) { d.innerText = "❌ Error"; }
+      fileInput.value = "";
     }
 
-    function scrollToBottom() {
-      messagesBox.scrollTop = messagesBox.scrollHeight;
-    }
-
-    // Start
     loadChats();
-    // setInterval(loadChats, 5000); // Uncomment for auto-refresh
   </script>
 </body>
 </html>
