@@ -27,8 +27,8 @@
     /* ---- MESSAGE BUBBLES ---- */
     #messages > div {
         padding: 6px 10px;
-        margin-bottom: 2px;
-        max-width: 80%;
+        margin-bottom: 4px; /* Space between bubbles */
+        max-width: 85%;
         width: fit-content;
         border-radius: 0px 10px 10px 10px;
         font-size: 15px;
@@ -41,7 +41,7 @@
     }
 
     /* Sent Message: Dark Green */
-    #messages > div.sent, #messages > div.me, #messages > div.admin {
+    #messages > div.sent {
         background-color: #005c4b; 
         color: #e9edef;
         margin-left: auto; 
@@ -72,7 +72,6 @@
         <div class="text-center text-[#8696a0] text-xs mt-10">Loading...</div>
     </div>
   </div>
-
 
   <div id="chatContainer" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
     
@@ -116,7 +115,7 @@
         document.getElementById('chatContainer').classList.remove('hidden');
         document.getElementById('chatContainer').classList.add('flex-mobile');
       }
-      // Auto Focus on Input (Taaki tap na karna pade)
+      // Auto Focus on Input
       setTimeout(() => {
           document.getElementById('replyInput').focus();
       }, 300);
@@ -128,14 +127,12 @@
       document.getElementById('chatContainer').classList.add('hidden');
       document.getElementById('chatContainer').classList.remove('flex-mobile');
       
-      // Keyboard hide karne ke liye
       document.getElementById('replyInput').blur();
     }
   </script>
 
   <script>
-    // Maine app.js ka logic yahan embed kar diya hai taaki 
-    // Navigation functions (showChatUI) sahi se connect ho jayein.
+    // --- APP LOGIC WITH MEDIA SUPPORT ---
     
     let active = null;
     const replyInput = document.getElementById("replyInput");
@@ -157,7 +154,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="font-semibold truncate text-sm">${c._id}</div>
-              <div class="text-xs text-[#8696a0]">Tap to chat</div>
+              <div class="text-xs text-[#8696a0] truncate">${c.last || "Media file"}</div>
             </div>
           `;
           d.onclick = () => openChat(c._id);
@@ -170,7 +167,6 @@
       active = n;
       document.getElementById("headerTitle").innerText = n;
       
-      // 1. UI Switch (Mobile me Chat kholo)
       showChatUI(); 
 
       messagesBox.innerHTML = '<div class="text-center text-[#8696a0] text-xs mt-4">Loading...</div>';
@@ -182,13 +178,50 @@
 
         msgs.forEach(m => {
           const d = document.createElement("div");
-          d.innerText = m.text || "[media]";
           
-          // Green Bubble Logic
+          // 🟢 1. MEDIA DISPLAY LOGIC
+          let contentHtml = "";
+
+          if (m.media && m.media.url) {
+             const url = m.media.url;
+             const type = m.media.type;
+
+             if (type === 'image') {
+                 // Click to open full image
+                 contentHtml += `<img src="${url}" class="rounded-lg max-w-full sm:max-w-[300px] mb-1 cursor-pointer border border-[#ffffff20]" onclick="window.open('${url}')">`;
+             } 
+             else if (type === 'audio') {
+                 contentHtml += `<audio controls src="${url}" class="max-w-[240px] mt-1 mb-1"></audio>`;
+             } 
+             else if (type === 'video') {
+                 contentHtml += `<video controls src="${url}" class="rounded-lg max-w-full sm:max-w-[300px] mb-1"></video>`;
+             }
+             else {
+                 // Document / Other files
+                 contentHtml += `
+                 <a href="${url}" target="_blank" class="flex items-center gap-2 bg-[#00000030] p-2 rounded text-sm hover:bg-[#00000050] transition text-blue-300">
+                    <i class="fa-solid fa-download"></i> 
+                    <span>Download ${type}</span>
+                 </a>`;
+             }
+          }
+
+          // 🟢 2. TEXT LOGIC
+          if (m.text) {
+             contentHtml += `<div class="whitespace-pre-wrap">${m.text}</div>`;
+          }
+
+          // Fallback if empty
+          if (!contentHtml) contentHtml = "<em class='text-gray-400 text-xs'>Unsupported format</em>";
+
+          d.innerHTML = contentHtml;
+          
+          // 🟢 3. BUBBLE COLOR (Sent/Received)
           const dir = (m.direction || "").toLowerCase();
           if (dir === 'outbound' || dir === 'sent' || dir === 'out') {
             d.className = "sent"; 
           }
+          
           messagesBox.appendChild(d);
         });
         scrollToBottom();
@@ -207,7 +240,6 @@
       scrollToBottom();
 
       replyInput.value = ""; 
-      // Focus wapas input pe (taaki lagaatar type kar sake)
       replyInput.focus();
 
       try {
@@ -225,7 +257,7 @@
 
     // Start
     loadChats();
-    // setInterval(loadChats, 5000); // Uncomment if needed
+    // setInterval(loadChats, 5000); // Uncomment for auto-refresh
   </script>
 </body>
 </html>
